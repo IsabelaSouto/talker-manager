@@ -6,11 +6,13 @@ const validateTalk = require('../middlewares/validateTalk');
 const validateName = require('../middlewares/validateName');
 const validateAge = require('../middlewares/validateAge');
 
+const pathTalker = path.resolve(__dirname, '../talker.json');
+
 const router = express.Router();
 
 router.get('/', async (_req, res) => {
   try {
-    const data = await fs.readFile(path.resolve(__dirname, '../talker.json'));
+    const data = await fs.readFile(pathTalker);
     const talkers = JSON.parse(data);
     
     return res.status(200).json(talkers);
@@ -22,7 +24,7 @@ router.get('/', async (_req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
     
-  const data = await fs.readFile(path.resolve(__dirname, '../talker.json'));
+  const data = await fs.readFile(pathTalker);
   const talkers = JSON.parse(data);
   const talker = talkers.find((t) => t.id === Number(id));
     
@@ -32,14 +34,34 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', authorization, validateName, validateAge, validateTalk, async (req, res) => {
-  const content = await fs.readFile(path.resolve(__dirname, '../talker.json'));
-  const talkers = JSON.parse(content);
+  const data = await fs.readFile(pathTalker);
+  const talkers = JSON.parse(data);
   const newTalker = req.body;
   const id = talkers.length + 1;
   const newTalkerWithId = { id, ...newTalker };
   talkers.push(newTalkerWithId);
   await fs.writeFile(path.resolve(__dirname, '../talker.json'), JSON.stringify(talkers));
   return res.status(201).json(newTalkerWithId);
+});
+
+router.put('/:id', authorization, validateName, validateAge, validateTalk, async (req, res) => {
+  const { id } = req.params;
+  const data = await fs.readFile(pathTalker);
+  const talkers = JSON.parse(data);
+  const talkContent = req.body;
+  const talkerToModify = talkers.find((talker) => talker.id === Number(id));
+  if (!talkerToModify) {
+    return res.status(404).json({ message: 'Pessoa palestrante não encontrada' });
+  }
+  
+  const talkModified = talkers.map((talker) => {
+    if (talker.id === Number(id)) {
+      return { id: Number(id), ...talkContent };
+    }
+    return talker;
+  });
+  await fs.writeFile(pathTalker, JSON.stringify(talkModified));
+  return res.status(200).json({ id: Number(id), ...talkContent });
 });
 
 module.exports = router;
