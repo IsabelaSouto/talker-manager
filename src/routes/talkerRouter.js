@@ -21,6 +21,18 @@ router.get('/', async (_req, res) => {
   }
 });
 
+router.get('/search', authorization, async (req, res) => {
+  const searchTerm = req.query.q;
+  const data = await fs.readFile(pathTalker);
+  const talkers = JSON.parse(data);
+  if (!searchTerm || searchTerm.trim() === '') {
+    return res.status(200).json(talkers);
+  }
+  const filteredTalkers = talkers.filter((talker) =>
+    talker.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  res.status(200).json(filteredTalkers);
+});
+
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
     
