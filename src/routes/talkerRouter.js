@@ -64,4 +64,16 @@ router.put('/:id', authorization, validateName, validateAge, validateTalk, async
   return res.status(200).json({ id: Number(id), ...talkContent });
 });
 
+router.delete('/:id', authorization, async (req, res) => {
+  const { id } = req.params;
+
+  const data = await fs.readFile(pathTalker);
+  const talkers = JSON.parse(data);
+  const newTalkers = talkers.find((talker) => talker.id !== Number(id));
+
+  await fs.writeFile(pathTalker, JSON.stringify(newTalkers));
+
+  res.status(204).end();
+});
+
 module.exports = router;
